@@ -10,5 +10,9 @@ func main() {
 		fmt.Fprint(w, "Web Services are easy with Go!")
 	})
 
+	http.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request){
+		http.ServeFile(w, r, "./home.html")
+	})
+
 	http.ListenAndServe(":8000", nil)
 }
