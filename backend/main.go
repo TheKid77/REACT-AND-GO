@@ -1,42 +1,38 @@
 package main
 
 import (
-	"bufio"
-	"flag"
-	"fmt"
-	"log"
+	"encoding/json"
 	"net/http"
-	"os"
-	"strings"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
+// Data structure to serve as a response
+type Response struct {
+    Data []string `json:"data"`
+}
+
 func main() {
-	level := flag.String("level", "CRITICAL", "log level to filter for")
-	flag.Parse()
-	fmt.Println("Level contains", *level)
-	
-	f, err := os.Open("./log.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
+    r := chi.NewRouter()
 
-	bufReader := bufio.NewReader(f)
+    // Middleware
+    r.Use(middleware.Logger)  // Logs each HTTP request
+    r.Use(middleware.Recoverer) // Graceful panic recovery
 
-	for line, err := bufReader.ReadString('\n'); err == nil; line, err = bufReader.ReadString('\n') {
-		if strings.Contains(line, *level) {
-			fmt.Print(line)
-		}
-	}
+    // Define routes
+    r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Type", "application/json")
+        response := Response{Data: []string{"Hello, World!"}}
+        json.NewEncoder(w).Encode(response)
+    })
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
-		fmt.Fprint(w, "Web Services are easy with Go!")
-	})
+    r.Get("/data", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Type", "application/json")
+        response := Response{Data: []string{"item1", "item2", "item3"}}
+        json.NewEncoder(w).Encode(response)
+    })
 
-	http.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request){
-		http.ServeFile(w, r, "./home.html")
-	})
-
-	http.ListenAndServe(":8000", nil)
-
+    // Start the server
+    http.ListenAndServe(":8080", r)
 }
