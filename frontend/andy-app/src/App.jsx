@@ -1,5 +1,5 @@
 import { AppBar, Toolbar, Typography } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import reactLogo from "./assets/react.svg";
 import "./styles.css";
@@ -8,6 +8,14 @@ import viteLogo from "/vite.svg";
 function App() {
   const [count, setCount] = useState(0);
   // console.log(appbar);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:8080/main")
+      .then((response) => response.json())
+      .then((data) => setMessage(data.message))
+      .catch((error) => console.error("Error fetching data:", error));
+  }, []);
 
   return (
     <>
@@ -15,7 +23,7 @@ function App() {
         TEST
         <AppBar className={"appbar"}>
           <Toolbar>
-            <Typography>Welcome to my React App Bar</Typography>
+            <Typography>{message}</Typography>
           </Toolbar>
         </AppBar>
         <a href="https://vitejs.dev" target="_blank">

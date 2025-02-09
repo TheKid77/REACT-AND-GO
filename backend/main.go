@@ -6,33 +6,45 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
-// Data structure to serve as a response
+// Define a simple struct for API responses
 type Response struct {
-    Data []string `json:"data"`
+	Message string `json:"message"`
 }
 
 func main() {
-    r := chi.NewRouter()
+	r := chi.NewRouter()
 
-    // Middleware
-    r.Use(middleware.Logger)  // Logs each HTTP request
-    r.Use(middleware.Recoverer) // Graceful panic recovery
+	// Middleware stack
+	r.Use(middleware.Logger)   // Log API requests
+	r.Use(middleware.Recoverer) // Recover from panics
 
-    // Define routes
-    r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+    	// Enable CORS
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"}, // Adjust to match your frontend URL
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+        ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+        MaxAge:           300, // Cache preflight response for 5 minutes
+	}))
+
+	// Define routes
+	r.Get("/main", func(w http.ResponseWriter, r *http.Request) {
         w.Header().Set("Content-Type", "application/json")
-        response := Response{Data: []string{"Hello, World!"}}
-        json.NewEncoder(w).Encode(response)
-    })
+        w.Header().Set("Access-Control-Allow-Origin", "*") 
+		json.NewEncoder(w).Encode(Response{Message: "Welcome to the App Bar in Andy's REACT/Golang App"})
+	})
 
-    r.Get("/data", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/hello/{name}", func(w http.ResponseWriter, r *http.Request) {
+		name := chi.URLParam(r, "name")
         w.Header().Set("Content-Type", "application/json")
-        response := Response{Data: []string{"item1", "item2", "item3"}}
-        json.NewEncoder(w).Encode(response)
-    })
+        w.Header().Set("Access-Control-Allow-Origin", "*") 
+        json.NewEncoder(w).Encode(Response{Message: "Hello, " + name})
+	})
 
-    // Start the server
-    http.ListenAndServe(":8080", r)
+	// Start the server
+	http.ListenAndServe(":8080", r)
 }
